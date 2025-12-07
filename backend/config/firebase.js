@@ -33,7 +33,8 @@ try {
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: process.env.FIREBASE_DATABASE_URL
+  databaseURL: process.env.FIREBASE_DATABASE_URL,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${serviceAccount.project_id}.appspot.com`
 });
 
 console.log('✅ Firebase initialized successfully');
@@ -42,5 +43,6 @@ console.log('✅ Firebase initialized successfully');
 export const db = admin.database();
 export const firestore = admin.firestore();
 export const auth = admin.auth();
+export const storage = admin.storage();
 
 export default admin;

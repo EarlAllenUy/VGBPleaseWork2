@@ -41,7 +41,13 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`VGB Backend server running on port ${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
-});
+// Only start server if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`VGB Backend server running on port ${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/api/health`);
+  });
+}
+
+// Export app for testing
+export default app;

@@ -9,6 +9,7 @@ import {
   deleteGame
 } from '../controllers/gameController.js';
 import { verifyToken, verifyAdmin } from '../middleware/authMiddleware.js';
+import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -18,9 +19,9 @@ router.get('/search', searchGames);
 router.get('/filter', filterGames);
 router.get('/:gameId', getGameById);
 
-// Admin routes (NO MULTER - using Base64 now!)
-router.post('/', verifyToken, verifyAdmin, addGame);
-router.put('/:gameId', verifyToken, verifyAdmin, updateGame);
+// Admin routes - supports both file upload (multer) and Base64 in body
+router.post('/', verifyToken, verifyAdmin, upload.single('image'), addGame);
+router.put('/:gameId', verifyToken, verifyAdmin, upload.single('image'), updateGame);
 router.delete('/:gameId', verifyToken, verifyAdmin, deleteGame);
 
 export default router;

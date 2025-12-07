@@ -169,7 +169,7 @@ export const updateReview = async (req, res) => {
   }
 };
 
-// Delete review
+// Delete review (users can delete their own, admins can delete any)
 export const deleteReview = async (req, res) => {
   try {
     const { reviewId } = req.params;
@@ -183,8 +183,9 @@ export const deleteReview = async (req, res) => {
     
     const reviewData = reviewDoc.data();
     
-    // Check permissions
-    if (!isAdmin && reviewData.userId !== userId) {
+    // Check permissions - user must own the review OR be admin
+    const isOwner = reviewData.userId === userId;
+    if (!isAdmin && !isOwner) {
       return res.status(403).json({ 
         error: 'User can only delete their own reviews' 
       });
@@ -204,6 +205,97 @@ export const deleteReview = async (req, res) => {
     res.json({ message: 'Review deleted successfully' });
   } catch (error) {
     console.error('Delete review error:', error);
+    res.status(500).json({ error: 'Failed to delete review' });
+  }
+};
+
+// Get all reviews for admin moderation (includes user and game details)
+export const getAllReviewsForAdmin = async (req, res) => {
+  try {
+    const snapshot = await firestore.collection('reviews')
+      .orderBy('dateTimePosted', 'desc')
+      .get();
+    
+    const reviews = [];
+    
+    // Get user and game details for each review
+    for (const doc of snapshot.docs) {
+      const reviewData = doc.data();
+      
+      // Get user data
+      let userData = null;
+      try {
+        const userSnapshot = await db.ref(`users/${reviewData.userId}`).once('value');
+        userData = userSnapshot.val();
+      } catch (error) {
+        console.warn(`Could not fetch user data for ${reviewData.userId}`);
+      }
+      
+      // Get game data
+      let gameData = null;
+      try {
+        const gameSnapshot = await db.ref(`games/${reviewData.gameId}`).once('value');
+        gameData = gameSnapshot.val();
+      } catch (error) {
+        console.warn(`Could not fetch game data for ${reviewData.gameId}`);
+      }
+      
+      reviews.push({
+        reviewId: doc.id,
+        ...reviewData,
+        user: userData ? {
+          userId: userData.userId,
+          username: userData.username,
+          email: userData.email
+        } : null,
+        game: gameData ? {
+          gameId: gameData.gameId,
+          title: gameData.title,
+          image: gameData.image || gameData.imageBase64 || null
+        } : null
+      });
+    }
+    
+    res.json(reviews);
+  } catch (error) {
+    console.error('Get all reviews for admin error:', error);
+    res.status(500).json({ error: 'Failed to retrieve reviews' });
+  }
+};
+
+// Delete review by admin (for moderation)
+export const deleteReviewByAdmin = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    
+    const reviewDoc = await firestore.collection('reviews').doc(reviewId).get();
+    
+    if (!reviewDoc.exists) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+    
+    const reviewData = reviewDoc.data();
+    const gameId = reviewData.gameId;
+    const hadRating = reviewData.rating !== null;
+    
+    // Delete review
+    await firestore.collection('reviews').doc(reviewId).delete();
+    
+    // Update game rating if review had a rating
+    if (hadRating) {
+      await updateGameRating(gameId);
+    }
+    
+    res.json({ 
+      message: 'Review deleted successfully by admin',
+      deletedReview: {
+        reviewId,
+        gameId,
+        userId: reviewData.userId
+      }
+    });
+  } catch (error) {
+    console.error('Delete review by admin error:', error);
     res.status(500).json({ error: 'Failed to delete review' });
   }
 };
