@@ -18,14 +18,30 @@ const authFetch = async (url, options = {}) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
   
-  const response = await fetch(url, { ...options, headers });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Request failed');
+  try {
+    const response = await fetch(url, { ...options, headers });
+    
+    if (!response.ok) {
+      let errorMessage = 'Request failed';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+    
+    // Handle empty responses
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    }
+    return {};
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
   }
-  
-  return response.json();
 };
 
 // GAME API
@@ -77,6 +93,13 @@ export const reviewAPI = {
   delete: (reviewId, userId, isAdmin) => authFetch(`${API_URL}/reviews/${reviewId}`, {
     method: 'DELETE',
     body: JSON.stringify({ userId, isAdmin })
+  }),
+  
+  // Admin moderation endpoints
+  getAllForAdmin: () => authFetch(`${API_URL}/reviews/admin/all`),
+  
+  deleteByAdmin: (reviewId) => authFetch(`${API_URL}/reviews/admin/${reviewId}`, {
+    method: 'DELETE'
   })
 };
 

@@ -12,21 +12,28 @@ export const getUserFavorites = async (req, res) => {
     
     const favorites = [];
     
-    for (const child of Object.values(snapshot.val() || {})) {
-      // Get game details
-      const gameSnapshot = await db.ref(`games/${child.gameId}`).once('value');
-      const gameData = gameSnapshot.val();
-      
-      if (gameData) {
-        favorites.push({
-          favoriteId: child.userId + '_' + child.gameId,
-          userId: child.userId,
-          gameId: child.gameId,
-          dateAdded: child.dateAdded,
-          game: { id: child.gameId, ...gameData }
-        });
-      }
-    }
+    // Use forEach for async operations
+    const promises = [];
+    snapshot.forEach((childSnapshot) => {
+      const child = childSnapshot.val();
+      promises.push(
+        db.ref(`games/${child.gameId}`).once('value').then((gameSnapshot) => {
+          const gameData = gameSnapshot.val();
+          
+          if (gameData) {
+            favorites.push({
+              favoriteId: child.userId + '_' + child.gameId,
+              userId: child.userId,
+              gameId: child.gameId,
+              dateAdded: child.dateAdded,
+              game: { id: child.gameId, ...gameData }
+            });
+          }
+        })
+      );
+    });
+    
+    await Promise.all(promises);
     
     res.json(favorites);
   } catch (error) {

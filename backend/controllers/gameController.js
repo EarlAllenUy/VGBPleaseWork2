@@ -1,4 +1,5 @@
 import { db, firestore } from '../config/firebase.js';
+import { uploadImageToStorage, deleteImageFromStorage, base64ToBuffer, validateImage } from '../utils/storageHelper.js';
 
 // Get all games
 export const getAllGames = async (req, res) => {
@@ -126,7 +127,7 @@ export const filterGames = async (req, res) => {
   }
 };
 
-// Add game (Admin only) - WITH BASE64 IMAGE
+// Add game (Admin only) - Supports both file upload and Base64
 export const addGame = async (req, res) => {
   try {
     const { 
@@ -138,24 +139,60 @@ export const addGame = async (req, res) => {
       genre, 
       upcoming, 
       released,
-      imageBase64  // Base64 string from frontend
+      imageBase64  // Base64 string from frontend (fallback)
     } = req.body;
     
-    // Validate image size (limit to ~1MB base64 = ~750KB actual)
-    if (imageBase64 && imageBase64.length > 1400000) {
+    // Validate required fields
+    if (!gameId || !title) {
       return res.status(400).json({ 
-        error: 'Image too large. Please use image under 1MB' 
+        error: 'gameId and title are required' 
       });
+    }
+    
+    let imageUrl = '';
+    
+    // Handle file upload (multer)
+    if (req.file) {
+      const validation = validateImage(req.file.mimetype, req.file.size);
+      if (!validation.isValid) {
+        return res.status(400).json({ error: validation.error });
+      }
+      
+      const fileName = `${gameId}.${req.file.mimetype.split('/')[1]}`;
+      imageUrl = await uploadImageToStorage(
+        req.file.buffer, 
+        fileName, 
+        req.file.mimetype
+      );
+    }
+    // Handle Base64 image (backward compatibility)
+    else if (imageBase64) {
+      try {
+        const { buffer, mimeType } = base64ToBuffer(imageBase64);
+        const validation = validateImage(mimeType, buffer.length);
+        
+        if (!validation.isValid) {
+          return res.status(400).json({ error: validation.error });
+        }
+        
+        const fileName = `${gameId}.${mimeType.split('/')[1]}`;
+        imageUrl = await uploadImageToStorage(buffer, fileName, mimeType);
+      } catch (error) {
+        return res.status(400).json({ 
+          error: `Invalid image format: ${error.message}` 
+        });
+      }
     }
     
     const gameData = {
       gameId,
       title,
-      description,
-      releaseDate,
-      platform,
-      genre,
-      imageBase64: imageBase64 || '',  // Store Base64 directly
+      description: description || '',
+      releaseDate: releaseDate || '',
+      platform: platform || '',
+      genre: genre || '',
+      image: imageUrl,  // Store Firebase Storage URL
+      imageBase64: imageBase64 || '',  // Keep Base64 for backward compatibility
       upcoming: upcoming === 'true' || upcoming === true,
       released: released === 'true' || released === true,
       averageRating: 0,
@@ -166,15 +203,18 @@ export const addGame = async (req, res) => {
     
     res.status(201).json({ 
       message: 'Game added successfully', 
-      gameId
+      gameId,
+      imageUrl: imageUrl || 'No image provided'
     });
   } catch (error) {
     console.error('Add game error:', error);
-    res.status(500).json({ error: 'Failed to add game' });
+    res.status(500).json({ 
+      error: error.message || 'Failed to add game' 
+    });
   }
 };
 
-// Update game (Admin only) - WITH BASE64 IMAGE
+// Update game (Admin only) - Supports both file upload and Base64
 export const updateGame = async (req, res) => {
   try {
     const { gameId } = req.params;
@@ -189,24 +229,83 @@ export const updateGame = async (req, res) => {
       imageBase64
     } = req.body;
     
-    const updateData = {
-      title,
-      description,
-      releaseDate,
-      platform,
-      genre,
-      upcoming: upcoming === 'true' || upcoming === true,
-      released: released === 'true' || released === true
-    };
+    // Check if game exists
+    const gameSnapshot = await db.ref(`games/${gameId}`).once('value');
+    if (!gameSnapshot.exists()) {
+      return res.status(404).json({ error: 'Game not found' });
+    }
     
-    // Update image if provided
-    if (imageBase64) {
-      if (imageBase64.length > 1400000) {
+    const updateData = {};
+    
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (releaseDate !== undefined) updateData.releaseDate = releaseDate;
+    if (platform !== undefined) updateData.platform = platform;
+    if (genre !== undefined) updateData.genre = genre;
+    if (upcoming !== undefined) {
+      updateData.upcoming = upcoming === 'true' || upcoming === true;
+    }
+    if (released !== undefined) {
+      updateData.released = released === 'true' || released === true;
+    }
+    
+    // Handle image update - file upload (multer) takes priority
+    if (req.file) {
+      // Delete old image if exists
+      const oldGameData = gameSnapshot.val();
+      if (oldGameData.image) {
+        try {
+          const oldFileName = oldGameData.image.split('/').pop();
+          await deleteImageFromStorage(`game-images/${oldFileName}`);
+        } catch (error) {
+          console.warn('Could not delete old image:', error.message);
+        }
+      }
+      
+      // Upload new image
+      const validation = validateImage(req.file.mimetype, req.file.size);
+      if (!validation.isValid) {
+        return res.status(400).json({ error: validation.error });
+      }
+      
+      const fileName = `${gameId}.${req.file.mimetype.split('/')[1]}`;
+      const imageUrl = await uploadImageToStorage(
+        req.file.buffer, 
+        fileName, 
+        req.file.mimetype
+      );
+      updateData.image = imageUrl;
+    }
+    // Handle Base64 image update
+    else if (imageBase64) {
+      try {
+        // Delete old image
+        const oldGameData = gameSnapshot.val();
+        if (oldGameData.image) {
+          try {
+            const oldFileName = oldGameData.image.split('/').pop();
+            await deleteImageFromStorage(`game-images/${oldFileName}`);
+          } catch (error) {
+            console.warn('Could not delete old image:', error.message);
+          }
+        }
+        
+        const { buffer, mimeType } = base64ToBuffer(imageBase64);
+        const validation = validateImage(mimeType, buffer.length);
+        
+        if (!validation.isValid) {
+          return res.status(400).json({ error: validation.error });
+        }
+        
+        const fileName = `${gameId}.${mimeType.split('/')[1]}`;
+        const imageUrl = await uploadImageToStorage(buffer, fileName, mimeType);
+        updateData.image = imageUrl;
+        updateData.imageBase64 = imageBase64;  // Keep for backward compatibility
+      } catch (error) {
         return res.status(400).json({ 
-          error: 'Image too large. Please use image under 1MB' 
+          error: `Invalid image format: ${error.message}` 
         });
       }
-      updateData.imageBase64 = imageBase64;
     }
     
     await db.ref(`games/${gameId}`).update(updateData);
@@ -214,11 +313,13 @@ export const updateGame = async (req, res) => {
     res.json({ message: 'Game updated successfully' });
   } catch (error) {
     console.error('Update game error:', error);
-    res.status(500).json({ error: 'Failed to update game' });
+    res.status(500).json({ 
+      error: error.message || 'Failed to update game' 
+    });
   }
 };
 
-// Delete game (Admin only) - SIMPLIFIED (no storage deletion)
+// Delete game (Admin only) - Includes image deletion from Storage
 export const deleteGame = async (req, res) => {
   try {
     const { gameId } = req.params;
@@ -227,6 +328,21 @@ export const deleteGame = async (req, res) => {
     const gameSnapshot = await db.ref(`games/${gameId}`).once('value');
     if (!gameSnapshot.exists()) {
       return res.status(404).json({ error: 'Game not found' });
+    }
+    
+    const gameData = gameSnapshot.val();
+    
+    // Delete image from Storage if exists
+    if (gameData.image) {
+      try {
+        // Extract filename from URL
+        const imageUrlParts = gameData.image.split('/');
+        const fileName = imageUrlParts[imageUrlParts.length - 1];
+        await deleteImageFromStorage(`game-images/${fileName}`);
+      } catch (error) {
+        console.warn('Could not delete image from Storage:', error.message);
+        // Continue with deletion even if image deletion fails
+      }
     }
     
     // Delete all reviews for this game
@@ -238,7 +354,9 @@ export const deleteGame = async (req, res) => {
     reviewsSnapshot.forEach(doc => {
       batch.delete(doc.ref);
     });
-    await batch.commit();
+    if (!reviewsSnapshot.empty) {
+      await batch.commit();
+    }
     
     // Delete favorites
     const favoritesSnapshot = await db.ref('favorites')
@@ -255,12 +373,14 @@ export const deleteGame = async (req, res) => {
       await db.ref('favorites').update(favoriteUpdates);
     }
     
-    // Delete game (image is deleted automatically with the game data)
+    // Delete game
     await db.ref(`games/${gameId}`).remove();
     
     res.json({ message: 'Game and related data deleted successfully' });
   } catch (error) {
     console.error('Delete game error:', error);
-    res.status(500).json({ error: 'Failed to delete game' });
+    res.status(500).json({ 
+      error: error.message || 'Failed to delete game' 
+    });
   }
 };

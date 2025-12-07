@@ -155,7 +155,7 @@
 
         document.getElementById('game-content').innerHTML = `
           <div class="game-detail-header">
-            <img src="${game.imageBase64 || 'images/placeholder.png'}" 
+            <img src="${game.image || game.imageBase64 || 'images/placeholder.png'}" 
                  alt="${game.title}" 
                  class="game-detail-image"
                  onerror="this.src='images/placeholder.png'">

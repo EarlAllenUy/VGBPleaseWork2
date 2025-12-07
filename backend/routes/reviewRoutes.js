@@ -5,9 +5,11 @@ import {
   getReviewsByUser,
   addReview,
   updateReview,
-  deleteReview
+  deleteReview,
+  getAllReviewsForAdmin,
+  deleteReviewByAdmin
 } from '../controllers/reviewController.js';
-import { verifyToken } from '../middleware/authMiddleware.js';
+import { verifyToken, verifyAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -20,5 +22,9 @@ router.get('/user/:userId', getReviewsByUser);
 router.post('/', verifyToken, addReview);
 router.put('/:reviewId', verifyToken, updateReview);
 router.delete('/:reviewId', verifyToken, deleteReview);
+
+// Admin-only routes for moderation
+router.get('/admin/all', verifyToken, verifyAdmin, getAllReviewsForAdmin);
+router.delete('/admin/:reviewId', verifyToken, verifyAdmin, deleteReviewByAdmin);
 
 export default router;

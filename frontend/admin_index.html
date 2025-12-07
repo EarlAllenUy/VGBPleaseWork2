@@ -1,38 +1,85 @@
-<header>
-  <div class="logo">
-    <img src="images/VGB_Logo.png" alt="Logo" class="logo-img">
-    VIDEO GAME BULLETIN
-  </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Game Bulletin - Admin Dashboard</title>
   <link rel="stylesheet" href="css/style.css">
-  <nav>
-    <a href="admin_index.html" class="active">DASHBOARD</a>
-    <a href="admin_calendar.html">CALENDAR</a>
-    <a href="admin_reviews.html">REVIEWS</a>
-  </nav>
-  <div class="auth">
-    <span class="welcome">Admin: VGBAdmin1</span>
-    <button class="logout">Log out</button>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <img src="images/VGB_Logo.png" alt="Logo" class="logo-img">
+      VIDEO GAME BULLETIN
+    </div>
+    <nav>
+      <a href="admin_index.html" class="active">DASHBOARD</a>
+      <a href="admin_calendar.html">CALENDAR</a>
+      <a href="admin_reviews.html">REVIEWS</a>
+    </nav>
+    <div class="auth">
+      <span class="welcome" id="welcomeMessage">Welcome, Admin!</span>
+      <button class="logout">Log out</button>
+    </div>
+  </header>
+
+  <div class="content-wrapper">
+    <aside class="sidebar">
+      <h3>Admin Controls</h3>
+      <button id="addGameBtn" class="sidebar-btn active">Add New Game</button>
+      <button id="manageGamesBtn" class="sidebar-btn">Manage Games</button>
+      <button id="viewAllReviewsBtn" class="sidebar-btn">View All Reviews</button>
+    </aside>
+
+    <main>
+      <section class="featured">
+        <h2 id="section-title">Admin Dashboard</h2>
+        <p>Welcome back, Admin. Manage game content and reviews here.</p>
+
+        <!-- Game Management Section -->
+        <div id="game-management-section">
+          <div class="admin-panel">
+            <h3>Game Management</h3>
+            <button id="toggleAddGameForm" class="btn-primary">Add New Game</button>
+            
+            <!-- Add Game Form (hidden by default) -->
+            <div id="addGameForm" style="display: none; margin-top: 20px; padding: 20px; background: #1a1a1a; border-radius: 10px;">
+              <h4>Add New Game</h4>
+              <form id="newGameForm">
+                <input type="text" id="gameId" placeholder="Game ID (unique)" required>
+                <input type="text" id="gameTitle" placeholder="Game Title" required>
+                <textarea id="gameDescription" placeholder="Description" rows="4" required></textarea>
+                <input type="date" id="gameReleaseDate" required>
+                <input type="text" id="gamePlatform" placeholder="Platform (e.g., PC, PS5, Xbox Series X)" required>
+                <input type="text" id="gameGenre" placeholder="Genre (e.g., Action, RPG)" required>
+                <label>
+                  <input type="checkbox" id="gameUpcoming"> Upcoming
+                </label>
+                <label>
+                  <input type="checkbox" id="gameReleased"> Released
+                </label>
+                <label>Game Image (Base64 or URL):
+                  <input type="text" id="gameImage" placeholder="Image URL or base64 string">
+                </label>
+                <button type="submit" class="btn-primary">Add Game</button>
+                <button type="button" class="btn-secondary" id="cancelAddGame">Cancel</button>
+              </form>
+            </div>
+
+            <!-- Games List -->
+            <div id="admin-games-container" style="margin-top: 20px;">
+              <p class="loading">Loading games...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
-</header>
 
-<div class="content-wrapper">
-  <aside class="sidebar">
-    <h3>Admin Controls</h3>
-    <button>Manage Users</button>
-    <button>Approve Reviews</button>
-    <button>Edit Game Listings</button>
-    <button>View Reports</button>
-  </aside>
+  <footer>
+    <p>&copy; 2025 Project VAUYL</p>
+  </footer>
 
-  <main>
-    <section class="featured">
-      <h2>Admin Dashboard</h2>
-      <p>Welcome back, Admin. Manage content and users here.</p>
-    </section>
-  </main>
-</div>
-
-<footer>
-  <p>&copy; 2025 Project VAUYL</p>
-</footer>
-<script type="module" src="js/main.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

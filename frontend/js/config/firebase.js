@@ -6,17 +6,19 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, si
 // Replace with YOUR actual config from Firebase Console
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCR669nc7foCmE1aL4ejxayyWFAptGccTY",
-  authDomain: "video-game-bulletin-22375.firebaseapp.com",
-  databaseURL: "https://video-game-bulletin-22375-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "video-game-bulletin-22375",
-  storageBucket: "video-game-bulletin-22375.firebasestorage.app",
-  messagingSenderId: "345428969750",
-  appId: "1:345428969750:web:195896a4f51093a756e837"
+  apiKey: "AIzaSyBLQ9lhm-_rxC5KUOgjZvKGiQk_ZpUSSLY",
+  authDomain: "video-game-bulletin-bdae7.firebaseapp.com",
+  databaseURL: "https://video-game-bulletin-bdae7-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "video-game-bulletin-bdae7",
+  storageBucket: "video-game-bulletin-bdae7.firebasestorage.app",
+  messagingSenderId: "81198101400",
+  appId: "1:81198101400:web:50d793c6dfd60ac71671ed",
+  measurementId: "G-0EHZVHZZX1"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+
 
 export { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };

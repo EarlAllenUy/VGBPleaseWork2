@@ -1,6 +1,7 @@
 // Authentication Service
 import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from '../config/firebase.js';
 import { authAPI } from './api.js';
+import { redirectBasedOnRole } from './utils/helpers.js';
 
 // Current user state
 let currentUser = null;
@@ -161,4 +162,22 @@ export const redirectBasedOnRole = (page = 'index') => {
   
   const targetPage = pageMap[page]?.[role] || 'index.html';
   window.location.href = targetPage;
+};
+
+// After successful login
+export const handleLoginSuccess = (result) => {
+  if (result.success) {
+    showMessage('Login successful! Welcome back.');
+    // ADD THIS LINE → redirect based on role
+    redirectBasedOnRole('index');
+  }
+};
+
+// After successful register
+export const handleRegisterSuccess = (result) => {
+  if (result.success) {
+    showMessage(`Welcome ${result.username}! Account created.`);
+    // ADD THIS LINE
+    redirectBasedOnRole('index');
+  }
 };

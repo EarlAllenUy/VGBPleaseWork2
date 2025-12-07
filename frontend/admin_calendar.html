@@ -47,68 +47,6 @@
     <p>&copy; 2025 Project VAUYL</p>
   </footer>
 
-  <script>
-    // same script as before
-    let today = new Date();
-    let currentMonth = today.getMonth();
-    let currentYear = today.getFullYear();
-
-    function generateCalendar(year, month) {
-      const calendar = document.getElementById("calendar");
-      const monthYear = document.getElementById("month-year");
-      calendar.innerHTML = "";
-
-      const monthName = new Date(year, month).toLocaleString("default", { month: "long" });
-      monthYear.textContent = `${monthName} ${year}`;
-
-      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      days.forEach(day => {
-        let cell = document.createElement("div");
-        cell.className = "day header";
-        cell.textContent = day;
-        calendar.appendChild(cell);
-      });
-
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-      for (let i = 0; i < firstDay; i++) {
-        let cell = document.createElement("div");
-        cell.className = "day empty";
-        calendar.appendChild(cell);
-      }
-
-      for (let d = 1; d <= daysInMonth; d++) {
-        let cell = document.createElement("div");
-        cell.className = "day";
-        cell.textContent = d;
-        if (d === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-          cell.classList.add("today");
-        }
-        calendar.appendChild(cell);
-      }
-    }
-
-    function prevMonth() {
-      currentMonth--;
-      if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-      }
-      generateCalendar(currentYear, currentMonth);
-    }
-
-    function nextMonth() {
-      currentMonth++;
-      if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-      }
-      generateCalendar(currentYear, currentMonth);
-    }
-
-    generateCalendar(currentYear, currentMonth);
-  </script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
-<script type="module" src="js/main.js"></script>

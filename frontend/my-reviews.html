@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VGB Admin - Review Moderation</title>
+  <title>My Reviews - Video Game Bulletin</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -13,30 +13,30 @@
       VIDEO GAME BULLETIN
     </div>
     <nav>
-      <a href="admin_index.html">DASHBOARD</a>
-      <a href="admin_calendar.html">CALENDAR</a>
-      <a href="admin_reviews.html" class="active">REVIEWS</a>
+      <a href="user_index.html">HOME</a>
+      <a href="user_calendar.html">CALENDAR</a>
+      <a href="user_reviews.html">REVIEWS</a>
     </nav>
     <div class="auth">
-      <span class="welcome" id="welcomeMessage">Welcome, Admin!</span>
+      <span class="welcome" id="welcomeMessage">Welcome, User!</span>
       <button class="logout">Log out</button>
     </div>
   </header>
 
   <div class="content-wrapper">
     <aside class="sidebar">
-      <h3>Admin Tools</h3>
-      <button id="viewAllReviewsBtn" class="sidebar-btn active">View All Reviews</button>
-      <button id="moderationQueueBtn" class="sidebar-btn">Moderation Queue</button>
+      <h3>User Tools</h3>
+      <button onclick="window.location.href='user_index.html'" class="sidebar-btn">Back to Dashboard</button>
+      <button onclick="window.location.href='my-favorites.html'" class="sidebar-btn">My Favorites</button>
     </aside>
 
     <main>
       <section class="reviews">
-        <h2>Review Moderation</h2>
-        <p>Oversee all submitted reviews and ensure content quality. You can view and delete any review.</p>
+        <h2>My Reviews</h2>
+        <p>View and manage your game reviews.</p>
 
-        <div id="admin-reviews-container" style="margin-top: 40px;">
-          <p class="loading">Loading reviews...</p>
+        <div id="my-reviews-container" style="margin-top: 40px;">
+          <p class="loading">Loading your reviews...</p>
         </div>
       </section>
     </main>
@@ -49,3 +49,4 @@
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
+

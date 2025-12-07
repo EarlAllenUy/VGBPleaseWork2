@@ -6,7 +6,7 @@ export const createGameCard = (game) => {
   card.className = 'game-card';
   card.dataset.gameId = game.id || game.gameId;
   
-  const imageUrl = game.imageBase64 || game.image || 'images/placeholder.png';
+  const imageUrl = game.image || game.imageBase64 || 'images/placeholder.png';
   const rating = game.averageRating || 0;
   const totalRatings = game.totalRatings || 0;
   
